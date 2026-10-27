@@ -1,0 +1,11 @@
+{
+  "name": "demo-backend",
+  "version": "1.0.0",
+  "description": "Tiny dependency-free API used for the DevOps CI/CD assignment",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
