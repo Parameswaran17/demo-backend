@@ -13,7 +13,7 @@ function handler(req, res) {
 
   if (req.url === '/api/health') return send(200, { status: 'ok' });
   if (req.url === '/api/version') return send(200, { service: 'backend', commit: COMMIT, started: STARTED });
-  if (req.url === '/api/message') return send(200, { message: 'Hello from the backend!', commit: COMMIT });
+  if (req.url === '/api/message') return send(200, { message: 'Hello from the backend v2!', commit: COMMIT });
   return send(404, { error: 'not found' });
 }
 
