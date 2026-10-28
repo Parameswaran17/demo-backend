@@ -20,7 +20,7 @@
 set -euo pipefail
 
 FE_URL=""; BE_URL=""; FE_REF="main"; BE_REF="main"
-WORKSPACE="$HOME/deploy-workspace"; PORT=8080; RUN_TESTS=true
+WORKSPACE="$HOME/deploy-workspace"; PORT=8081; RUN_TESTS=true
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 PROJECT="demo-app"
