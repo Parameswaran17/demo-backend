@@ -1,21 +1,26 @@
 // Declarative Jenkins pipeline that builds and deploys the full app
-// (frontend repo + backend repo) by calling deploy.sh.
+// (frontend repo + backend repo) by calling deploy/deploy.sh.
+//
+// No build parameters: everything is configured in this file and the pipeline
+// starts automatically when a new commit lands on the backend repo's main branch.
+//
+// To deploy a specific version instead of the latest, change FRONTEND_REF /
+// BACKEND_REF below to a commit SHA, branch or tag, then commit and push.
 //
 // Prerequisites on the Jenkins agent (Ubuntu):
 //   - docker + docker compose plugin; the 'jenkins' user is in the 'docker' group
 //   - git, curl
-//   - this file + deploy.sh + docker-compose.yml are in the repo Jenkins checks out
-//   - (private repos) a 'git-credentials' credential of type "SSH key" or "username/password"
 //
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'FRONTEND_REPO', defaultValue: 'https://github.com/<your-user>/demo-frontend.git', description: 'Frontend git URL')
-        string(name: 'BACKEND_REPO',  defaultValue: 'https://github.com/<your-user>/demo-backend.git',  description: 'Backend git URL')
-        string(name: 'FRONTEND_REF',  defaultValue: 'main', description: 'Frontend commit SHA / branch / tag')
-        string(name: 'BACKEND_REF',   defaultValue: 'main', description: 'Backend commit SHA / branch / tag')
-        string(name: 'APP_PORT',      defaultValue: '8080', description: 'Host port to publish the app on')
+    environment {
+        FRONTEND_REPO = 'https://github.com/Parameswaran17/demo-frontend.git'
+        BACKEND_REPO  = 'https://github.com/Parameswaran17/demo-backend.git'
+        FRONTEND_REF  = 'main'      // commit SHA / branch / tag, e.g. '7334a96'
+        BACKEND_REF   = 'main'      // commit SHA / branch / tag, e.g. '038b197'
+        APP_PORT      = '8081'      // Jenkins itself uses 8080
+        WORKSPACE_DIR = "${env.JENKINS_HOME}/deploy-workspace"
     }
 
     options {
@@ -25,13 +30,10 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20'))
     }
 
-    // Optional: build automatically when GitHub pushes (configure a webhook -> /github-webhook/)
-    // triggers { githubPush() }
-    // ...or poll every 5 minutes as a fallback:
-    // triggers { pollSCM('H/5 * * * *') }
-
-    environment {
-        WORKSPACE_DIR = "${env.JENKINS_HOME}/deploy-workspace"
+    triggers {
+        // Check the backend repo for new commits every ~2 minutes and build when it changes.
+        // (A GitHub webhook would need a public URL; polling works on localhost.)
+        pollSCM('H/2 * * * *')
     }
 
     stages {
@@ -72,7 +74,7 @@ pipeline {
     }
 
     post {
-        success { echo "Deployed frontend@${params.FRONTEND_REF} + backend@${params.BACKEND_REF}" }
+        success { echo "Deployed frontend@${env.FRONTEND_REF} + backend@${env.BACKEND_REF} at http://localhost:${env.APP_PORT}" }
         failure { echo 'Deployment failed - deploy.sh rolls back to the previous release automatically.' }
         always  { sh 'docker image prune -f --filter "until=168h" || true' }   // clean images older than 7 days
     }
